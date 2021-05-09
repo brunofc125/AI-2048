@@ -8,9 +8,11 @@
 #include <stdint.h>
 #include <time.h>
 #include <signal.h>
-
+#include "Tipos.h"
 #define SIZE 4
 uint32_t score=0;
+
+Board boardGame;
 uint8_t scheme=0;
 
 void getColor(uint8_t value, char *color, size_t length) {
@@ -349,7 +351,7 @@ void signal_callback_handler(int signum) {
 }
 
 int main(int argc, char *argv[]) {
-	uint8_t board[SIZE][SIZE];
+	Board board;
 	char c;
 	bool success;
 
@@ -368,7 +370,7 @@ int main(int argc, char *argv[]) {
 	// register signal handler for when ctrl-c is pressed
 	signal(SIGINT, signal_callback_handler);
 
-	initBoard(board);
+	initBoard(board.matriz);
 	setBufferedInput(false);
 	while (true) {
 		c=getchar();
@@ -380,27 +382,27 @@ int main(int argc, char *argv[]) {
 			case 97:	// 'a' key
 			case 104:	// 'h' key
 			case 68:	// left arrow
-				success = moveLeft(board);  break;
+				success = moveLeft(board.matriz);  break;
 			case 100:	// 'd' key
 			case 108:	// 'l' key
 			case 67:	// right arrow
-				success = moveRight(board); break;
+				success = moveRight(board.matriz); break;
 			case 119:	// 'w' key
 			case 107:	// 'k' key
 			case 65:	// up arrow
-				success = moveUp(board);    break;
+				success = moveUp(board.matriz);    break;
 			case 115:	// 's' key
 			case 106:	// 'j' key
 			case 66:	// down arrow
-				success = moveDown(board);  break;
+				success = moveDown(board.matriz);  break;
 			default: success = false;
 		}
 		if (success) {
-			drawBoard(board);
+			drawBoard(board.matriz);
 			usleep(150000);
-			addRandom(board);
-			drawBoard(board);
-			if (gameEnded(board)) {
+			addRandom(board.matriz);
+			drawBoard(board.matriz);
+			if (gameEnded(board.matriz)) {
 				printf("         GAME OVER          \n");
 				break;
 			}
@@ -411,15 +413,15 @@ int main(int argc, char *argv[]) {
 			if (c=='y') {
 				break;
 			}
-			drawBoard(board);
+			drawBoard(board.matriz);
 		}
 		if (c=='r') {
 			printf("       RESTART? (y/n)       \n");
 			c=getchar();
 			if (c=='y') {
-				initBoard(board);
+				initBoard(board.matriz);
 			}
-			drawBoard(board);
+			drawBoard(board.matriz);
 		}
 	}
 	setBufferedInput(true);
