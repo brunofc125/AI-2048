@@ -511,7 +511,7 @@ int main(int argc, char *argv[]) {
 					if (gameEnded(boards[tab].matriz)) {
 						//printf("         GAME OVER          \n");
 						tempo = (double) (clock() - h) / CLOCKS_PER_SEC;
-						if(tempo > 10) {
+						if(tempo > 21600) {
 							goto end;
 						}
 						maiorNumAtual[tab] = maiorNum(tab);
