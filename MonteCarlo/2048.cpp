@@ -356,7 +356,7 @@ int main(int argc, char *argv[]) {
 	return EXIT_SUCCESS;
 
 	monteCarlo:;
-	draw = false;
+	draw = true;
 	int movimento, primeiroMovimento;
 	bool primeiroMov;
 	initBoard(board, draw);

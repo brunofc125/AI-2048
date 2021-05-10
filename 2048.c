@@ -444,7 +444,8 @@ int main(int argc, char *argv[]) {
 	boards[0].DNA = (double*)malloc(boards[0].TamanhoDNA*sizeof(double));
 	DNASalvo[0] = (double*)malloc(boards[0].TamanhoDNA*sizeof(double));
 	setRandPesos(boards[0].DNA, boards[0].TamanhoDNA);
-	RNA_LerDNA(boards[0].DNA);
+	RNA_LerDNA(boards[0].DNA, &maiorValor);
+
 	memcpy(&DNASalvo[0], &boards[0].DNA, sizeof(boards[0].DNA));
 	RNA_CopiarVetorParaCamadas(boards[0].Cerebro, DNASalvo[0]);
 
@@ -503,10 +504,10 @@ int main(int argc, char *argv[]) {
 				
 				if (success) {
 					success = false;
-					//drawBoard(boards[tab].matriz, tab);
+					drawBoard(boards[tab].matriz, tab);
 					//usleep(800000);
 					addRandom(boards[tab].matriz);
-					//drawBoard(boards[tab].matriz, tab);
+					drawBoard(boards[tab].matriz, tab);
 					
 					if (gameEnded(boards[tab].matriz)) {
 						//printf("         GAME OVER          \n");
@@ -517,12 +518,12 @@ int main(int argc, char *argv[]) {
 						maiorNumAtual[tab] = maiorNum(tab);
 						if(maiorNumAtual[tab] > maiorValor) {
 							maiorValor = maiorNumAtual[tab];
-							//drawBoard(boards[tab].matriz, tab);
-							RNA_SalvarDNA(boards[tab].DNA);
+							drawBoard(boards[tab].matriz, tab);
+							RNA_SalvarDNA(boards[tab].DNA, maiorValor);
 						}
-						//printf("\033[A");
-						//printf("\033[A");
-						//printf("\nmaior atual: %d\tmaior salvo: %d\ttempo: %.2lf\n", maiorNumAtual[tab], maiorNumSalvo[tab], tempo);
+						printf("\033[A");
+						printf("\033[A");
+						printf("\nmaior atual: %d\tmaior salvo: %d\ttempo: %.2lf\n", maiorNumAtual[tab], maiorNumSalvo[tab], tempo);
 						reiniciarBoard(tab);
 						initBoard(tab, draw);
 					}

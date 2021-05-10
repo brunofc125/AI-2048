@@ -321,21 +321,25 @@ void RNA_SalvarRede(RedeNeural* Temp, char* String)
     }
 }
 
-void RNA_SalvarDNA(double* vetor) {
+void RNA_SalvarDNA(double* vetor, int maiorValor) {
     FILE* f;
     f = fopen("melhorDNA.txt", "w");
     for(int i = 0; i < 374; i++) {
         fprintf(f, "%f\t", vetor[i]);
     }
+    fprintf(f, "\n%d", maiorValor);
     fclose(f);
 }
 
-void RNA_LerDNA(double* vetor) {
+void RNA_LerDNA(double* vetor, int* maiorValor) {
     FILE* f;
     f = fopen("melhorDNA.txt", "r");
-    for(int i = 0; i < 374; i++) {
-        fscanf(f, "%lf", &vetor[i]);
+    if(f != NULL) {
+        for(int i = 0; i < 374; i++) {
+            fscanf(f, "%lf", &vetor[i]);
+        }
     }
+    fscanf(f, "%d", maiorValor);
     fclose(f);
 }
 
