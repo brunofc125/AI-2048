@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "tabuleiro.h": "c",
+        "*.tcc": "c",
+        "fstream": "c",
+        "type_traits": "c"
+    }
+}

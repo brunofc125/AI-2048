@@ -9,10 +9,9 @@
 #include <time.h>
 #include <signal.h>
 #include "Tipos.h"
-#define SIZE 4
-uint32_t score=0;
+#include "redeNeural.c"
+#include "Tabuleiro.c"
 
-Board boardGame;
 uint8_t scheme=0;
 
 void getColor(uint8_t value, char *color, size_t length) {
@@ -31,12 +30,12 @@ void getColor(uint8_t value, char *color, size_t length) {
 	snprintf(color,length,"\033[38;5;%d;48;5;%dm",*foreground,*background);
 }
 
-void drawBoard(uint8_t board[SIZE][SIZE]) {
+void drawBoard(uint8_t board[SIZE][SIZE], int indTab) {
 	uint8_t x,y;
 	char color[40], reset[] = "\033[m";
 	printf("\033[H");
 
-	printf("2048.c %17d pts\n\n",score);
+	printf("2048.c %17d pts\n\n",scores[indTab]);
 
 	for (y=0;y<SIZE;y++) {
 		for (x=0;x<SIZE;x++) {
@@ -97,7 +96,7 @@ uint8_t findTarget(uint8_t array[SIZE],uint8_t x,uint8_t stop) {
 	return x;
 }
 
-bool slideArray(uint8_t array[SIZE]) {
+bool slideArray(uint8_t array[SIZE], int indTab) {
 	bool success = false;
 	uint8_t x,t,stop=0;
 
@@ -113,7 +112,7 @@ bool slideArray(uint8_t array[SIZE]) {
 					// merge (increase power of two)
 					array[t]++;
 					// increase score
-					score+=(uint32_t)1<<array[t];
+					scores[indTab]+=(uint32_t)1<<array[t];
 					// set stop to avoid double merge
 					stop = t+1;
 				}
@@ -139,41 +138,41 @@ void rotateBoard(uint8_t board[SIZE][SIZE]) {
 	}
 }
 
-bool moveUp(uint8_t board[SIZE][SIZE]) {
+bool moveUp(uint8_t board[SIZE][SIZE], int indTab) {
 	bool success = false;
 	uint8_t x;
 	for (x=0;x<SIZE;x++) {
-		success |= slideArray(board[x]);
+		success |= slideArray(board[x], indTab);
 	}
 	return success;
 }
 
-bool moveLeft(uint8_t board[SIZE][SIZE]) {
+bool moveLeft(uint8_t board[SIZE][SIZE], int indTab) {
 	bool success;
 	rotateBoard(board);
-	success = moveUp(board);
+	success = moveUp(board, indTab);
 	rotateBoard(board);
 	rotateBoard(board);
 	rotateBoard(board);
 	return success;
 }
 
-bool moveDown(uint8_t board[SIZE][SIZE]) {
+bool moveDown(uint8_t board[SIZE][SIZE], int indTab) {
 	bool success;
 	rotateBoard(board);
 	rotateBoard(board);
-	success = moveUp(board);
+	success = moveUp(board, indTab);
 	rotateBoard(board);
 	rotateBoard(board);
 	return success;
 }
 
-bool moveRight(uint8_t board[SIZE][SIZE]) {
+bool moveRight(uint8_t board[SIZE][SIZE], int indTab) {
 	bool success;
 	rotateBoard(board);
 	rotateBoard(board);
 	rotateBoard(board);
-	success = moveUp(board);
+	success = moveUp(board, indTab);
 	rotateBoard(board);
 	return success;
 }
@@ -244,20 +243,21 @@ void addRandom(uint8_t board[SIZE][SIZE]) {
 	}
 }
 
-void initBoard(uint8_t board[SIZE][SIZE]) {
+void initBoard(int indTab, bool draw) {
 	uint8_t x,y;
 	for (x=0;x<SIZE;x++) {
 		for (y=0;y<SIZE;y++) {
-			board[x][y]=0;
+			boards[indTab].matriz[x][y]=0;
 		}
 	}
-	addRandom(board);
-	addRandom(board);
-	drawBoard(board);
-	score = 0;
+	addRandom(boards[indTab].matriz);
+	addRandom(boards[indTab].matriz);
+	if(draw) 
+		drawBoard(boards[indTab].matriz, indTab);
+	scores[indTab] = 0;
 }
 
-void setBufferedInput(bool enable) {
+/*void setBufferedInput(bool enable) {
 	static bool enabled = true;
 	static struct termios old;
 	struct termios new;
@@ -279,9 +279,9 @@ void setBufferedInput(bool enable) {
 		// set the new state
 		enabled = false;
 	}
-}
+}*/
 
-int test() {
+int test(int indTab) {
 	uint8_t array[SIZE];
 	// these are exponents with base 2 (1=2 2=4 3=8)
 	uint8_t data[] = {
@@ -311,7 +311,7 @@ int test() {
 		for (i=0;i<SIZE;i++) {
 			array[i] = in[i];
 		}
-		slideArray(array);
+		slideArray(array, indTab);
 		for (i=0;i<SIZE;i++) {
 			if (array[i] != out[i]) {
 				success = false;
@@ -345,18 +345,80 @@ int test() {
 
 void signal_callback_handler(int signum) {
 	printf("         TERMINATED         \n");
-	setBufferedInput(true);
+	//setBufferedInput(true);
 	printf("\033[?25h\033[m");
 	exit(signum);
 }
 
+uint8_t getHorizontalValues(uint8_t board[SIZE][SIZE]) {
+	uint8_t horizontalValue = 0;
+	for(int i = 0; i < SIZE; i++) {
+		for(int j = 0; j < SIZE-1; j++) {
+			if(board[i][j] != 0 && board[i][j] == board[i][j+1]) {
+				horizontalValue++;
+				j += 1;
+			}
+		}
+	}
+}
+
+uint8_t getVerticalValues(uint8_t board[SIZE][SIZE]) {
+	uint8_t verticalValue = 0;
+	for(int i = 0; i < SIZE; i++) {
+		for(int j = 0; j < SIZE-1; j++) {
+			if(board[j][i] != 0 &&  board[j][i] == board[j+1][i]) {
+				verticalValue++;
+				j += 1;
+			}
+		}
+	}
+}
+
+void bubble_sort(double vetor[], int ind[]) {
+    int k, j, aux;
+
+	ind[0] = 0;
+	ind[1] = 1;
+	ind[2] = 2;
+	ind[3] = 3;
+
+    for (k = 1; k < SIZE; k++) {
+        for (j = 0; j < SIZE - 1; j++) {
+            if (vetor[ind[j]] < vetor[ind[j + 1]]) {
+                aux          = ind[j];
+                ind[j]     = ind[j + 1];
+                ind[j + 1] = aux;
+            }
+        }
+    }
+
+	/*printf("\n");
+	for(k = 0; k < 4; k++) {
+		printf("%.2f\t", vetor[k]);
+	}
+	
+	printf("\n");
+	for(k = 0; k < 4; k++) {
+		printf("%d\t", ind[k]);
+	}
+	printf("\n");*/
+
+}
+
 int main(int argc, char *argv[]) {
-	Board board;
+	
 	char c;
 	bool success;
+	double saida[4];
+	double entrada[18];
+	int indiceSaida[4];
+	bool draw = false;
+	int auxTest = 0;
+
+	initVars();
 
 	if (argc == 2 && strcmp(argv[1],"test")==0) {
-		return test();
+		return test(0);
 	}
 	if (argc == 2 && strcmp(argv[1],"blackwhite")==0) {
 		scheme = 1;
@@ -370,11 +432,99 @@ int main(int argc, char *argv[]) {
 	// register signal handler for when ctrl-c is pressed
 	signal(SIGINT, signal_callback_handler);
 
-	initBoard(board.matriz);
-	setBufferedInput(false);
+	//setBufferedInput(false);
+	initBoard(0, draw);
+	boards[0].Cerebro = RNA_CarregarRede("n");
+	boards[0].TamanhoDNA = RNA_QuantidadePesos(boards[0].Cerebro);
+	boards[0].DNA = (double*)malloc(boards[0].TamanhoDNA*sizeof(double));
+	DNASalvo[0] = (double*)malloc(boards[0].TamanhoDNA*sizeof(double));
+	for(int i = 1; i < POPULACAO_TAMANHO; i++) {
+		initBoard(i, draw);
+		boards[i].Cerebro = RNA_CriarRedeNeural(2, 18, 10, 4);
+		boards[i].TamanhoDNA = boards[0].TamanhoDNA;
+		boards[i].DNA = (double*)malloc(boards[i].TamanhoDNA*sizeof(double));
+		DNASalvo[i] = (double*)malloc(boards[i].TamanhoDNA*sizeof(double));
+	}
+
+	for(int tab = 0; tab < POPULACAO_TAMANHO; tab++) {
+		while(true) {
+			int k = 2;
+			for(int i = 0; i < 4; i++) {
+				for(int j = 0; j < 4; j++) {
+					entrada[k] = boards[tab].matriz[i][j];//pow(2,boards[tab].matriz[i][j]);
+					k++;
+				}
+			}
+
+			entrada[0] = getHorizontalValues(boards[tab].matriz);
+			entrada[1] = getVerticalValues(boards[tab].matriz);
+
+			/*printf("\nentrada: ");
+			for(int m = 0; m < 18; m++) {
+				printf("%.2f\t", entrada[m]);
+			}
+			printf("\n");*/
+
+			RNA_CopiarParaEntrada(boards[tab].Cerebro, entrada);
+			RNA_CalcularSaida(boards[tab].Cerebro);
+			RNA_CopiarDaSaida(boards[tab].Cerebro, saida);
+
+			bubble_sort(saida, indiceSaida);
+
+			for(int i = 0; i < SIZE && !success; i++) {
+				switch (indiceSaida[i]) {
+					case 0:
+						success = moveLeft(boards[tab].matriz, tab);
+						break;
+					case 1:
+						success = moveRight(boards[tab].matriz, tab);
+						break;
+					case 2:
+						success = moveUp(boards[tab].matriz, tab);
+						break;
+					case 3:
+						success = moveDown(boards[tab].matriz, tab);
+						break;
+					default:
+						break;
+				}
+				
+				if (success) {
+					success = false;
+					//drawBoard(boards[tab].matriz, tab);
+					//usleep(200000);
+					addRandom(boards[tab].matriz);
+					//drawBoard(boards[tab].matriz, tab);
+					
+					if (gameEnded(boards[tab].matriz)) {
+						//printf("         GAME OVER          \n");
+						auxTest++;
+						if(auxTest > 100000) {
+							goto end;
+						}
+						maiorNumAtual[tab] = maiorNum(tab);
+						if(maiorNumAtual[tab] > 9) {
+							drawBoard(boards[tab].matriz, tab);
+							RNA_SalvarRede(boards[tab].Cerebro, "n");
+						}
+						printf("\033[A");
+						printf("\033[A");
+						printf("\nmaior atual: %d\tmaior salvo: %d\n", maiorNumAtual[tab], maiorNumSalvo[tab]);
+						reiniciarBoard(tab);
+						initBoard(tab, draw);
+					}
+				}
+			}
+		}
+		end:;
+	}
+
+
+	//setBufferedInput(true);
+/*
 	while (true) {
 		c=getchar();
-		if (c == -1){
+		if (c == -1) {
 			puts("\nError! Cannot read keyboard input!");
 			break;
 		}
@@ -424,9 +574,10 @@ int main(int argc, char *argv[]) {
 			drawBoard(board.matriz);
 		}
 	}
-	setBufferedInput(true);
 
-	printf("\033[?25h\033[m");
 
-	return EXIT_SUCCESS;
+
+	printf("\033[?25h\033[m");*/
+
+	return 0;
 }
