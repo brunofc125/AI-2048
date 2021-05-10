@@ -1,6 +1,7 @@
 #include <math.h>
 #define POPULACAO_TAMANHO 1
 #define SIZE 4
+#define QTD_CLONES 1000
 
 double* DNASalvo[POPULACAO_TAMANHO];
 uint32_t scoreSalvo[POPULACAO_TAMANHO];
@@ -31,6 +32,12 @@ int maiorNum(int indTab) {
     return max;
 }
 
+void setRandPesos(double *vetor, int n) {
+    for(int i = 0; i < n; i++) {
+        vetor[i] = rand()%200-100;
+    }
+}
+
 void reiniciarDNA(int indTab) {
     int TamanhoDNA = boards[indTab].TamanhoDNA;
 
@@ -40,11 +47,11 @@ void reiniciarDNA(int indTab) {
     for(int i=0; i<TamanhoDNA; i++)
     {
         DNASalvo[indTab][i] = boards[indTab].DNA[i];
-        boards[indTab].DNA[i] *= ((rand()%100)/100.0);
-        /*if(rand()%2==0) {
+        if(rand()%10 >=3) {
+            boards[indTab].DNA[i] *= ((rand()%100 + 1)/100.0);
         } else {
-            boards[indTab].DNA[i] = (rand()%200/10.0) - 100.0;
-        }*/
+            boards[indTab].DNA[i] = rand()%200-100;
+        }
     }
     RNA_CopiarVetorParaCamadas(boards[indTab].Cerebro, boards[indTab].DNA);
 }
@@ -55,7 +62,14 @@ void reiniciarBoard(int indTab) {
     } else {
         scores[indTab] = scoreSalvo[indTab];
         maiorNumAtual[indTab] = maiorNumSalvo[indTab];
-        memcpy(boards[indTab].DNA, DNASalvo[indTab], sizeof (DNASalvo[indTab]));
+        memcpy(&boards[indTab].DNA, &DNASalvo[indTab], sizeof(&DNASalvo[indTab]));
+        /*for(int i = 0; i < 10; i++) {
+            printf("%.2f\t",boards[indTab].DNA[i]);
+        }
+        printf("\n");
+        for(int i = 0; i < 10; i++) {
+            printf("%.2f\t",DNASalvo[indTab][i]);
+        }*/
         reiniciarDNA(indTab);
     }
 }
@@ -63,7 +77,7 @@ void reiniciarBoard(int indTab) {
 void melhorConfig(int indTab) {
     scores[indTab] = scoreSalvo[indTab];
     maiorNumAtual[indTab] = maiorNumSalvo[indTab];
-    memcpy(boards[indTab].DNA, DNASalvo[indTab], sizeof (DNASalvo[indTab]));
+    memcpy(&boards[indTab].DNA, &DNASalvo[indTab], sizeof(&DNASalvo[indTab]));
 }
 
 void initVars() {

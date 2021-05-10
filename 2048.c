@@ -411,10 +411,14 @@ int main(int argc, char *argv[]) {
 	bool success;
 	double saida[4];
 	double entrada[18];
+	clock_t h;
+    double tempo;
 	int indiceSaida[4];
 	bool draw = false;
 	int auxTest = 0;
-
+	int maiorValor = 0;
+	srand(time(NULL));
+	
 	initVars();
 
 	if (argc == 2 && strcmp(argv[1],"test")==0) {
@@ -434,10 +438,16 @@ int main(int argc, char *argv[]) {
 
 	//setBufferedInput(false);
 	initBoard(0, draw);
-	boards[0].Cerebro = RNA_CarregarRede("n");
+	//boards[0].Cerebro = RNA_CarregarRede("n");
+	boards[0].Cerebro = RNA_CriarRedeNeural(2, 18, 10, 4);
 	boards[0].TamanhoDNA = RNA_QuantidadePesos(boards[0].Cerebro);
 	boards[0].DNA = (double*)malloc(boards[0].TamanhoDNA*sizeof(double));
 	DNASalvo[0] = (double*)malloc(boards[0].TamanhoDNA*sizeof(double));
+	setRandPesos(boards[0].DNA, boards[0].TamanhoDNA);
+	RNA_LerDNA(boards[0].DNA);
+	memcpy(&DNASalvo[0], &boards[0].DNA, sizeof(boards[0].DNA));
+	RNA_CopiarVetorParaCamadas(boards[0].Cerebro, DNASalvo[0]);
+
 	for(int i = 1; i < POPULACAO_TAMANHO; i++) {
 		initBoard(i, draw);
 		boards[i].Cerebro = RNA_CriarRedeNeural(2, 18, 10, 4);
@@ -445,6 +455,8 @@ int main(int argc, char *argv[]) {
 		boards[i].DNA = (double*)malloc(boards[i].TamanhoDNA*sizeof(double));
 		DNASalvo[i] = (double*)malloc(boards[i].TamanhoDNA*sizeof(double));
 	}
+
+	h = clock();
 
 	for(int tab = 0; tab < POPULACAO_TAMANHO; tab++) {
 		while(true) {
@@ -492,24 +504,25 @@ int main(int argc, char *argv[]) {
 				if (success) {
 					success = false;
 					//drawBoard(boards[tab].matriz, tab);
-					//usleep(200000);
+					//usleep(800000);
 					addRandom(boards[tab].matriz);
 					//drawBoard(boards[tab].matriz, tab);
 					
 					if (gameEnded(boards[tab].matriz)) {
 						//printf("         GAME OVER          \n");
-						auxTest++;
-						if(auxTest > 100000) {
+						tempo = (double) (clock() - h) / CLOCKS_PER_SEC;
+						if(tempo > 10) {
 							goto end;
 						}
 						maiorNumAtual[tab] = maiorNum(tab);
-						if(maiorNumAtual[tab] > 9) {
-							drawBoard(boards[tab].matriz, tab);
-							RNA_SalvarRede(boards[tab].Cerebro, "n");
+						if(maiorNumAtual[tab] > maiorValor) {
+							maiorValor = maiorNumAtual[tab];
+							//drawBoard(boards[tab].matriz, tab);
+							RNA_SalvarDNA(boards[tab].DNA);
 						}
-						printf("\033[A");
-						printf("\033[A");
-						printf("\nmaior atual: %d\tmaior salvo: %d\n", maiorNumAtual[tab], maiorNumSalvo[tab]);
+						//printf("\033[A");
+						//printf("\033[A");
+						//printf("\nmaior atual: %d\tmaior salvo: %d\ttempo: %.2lf\n", maiorNumAtual[tab], maiorNumSalvo[tab], tempo);
 						reiniciarBoard(tab);
 						initBoard(tab, draw);
 					}
@@ -517,67 +530,9 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		end:;
+		RNA_DestruirRedeNeural(boards[tab].Cerebro);
 	}
-
-
-	//setBufferedInput(true);
-/*
-	while (true) {
-		c=getchar();
-		if (c == -1) {
-			puts("\nError! Cannot read keyboard input!");
-			break;
-		}
-		switch(c) {
-			case 97:	// 'a' key
-			case 104:	// 'h' key
-			case 68:	// left arrow
-				success = moveLeft(board.matriz);  break;
-			case 100:	// 'd' key
-			case 108:	// 'l' key
-			case 67:	// right arrow
-				success = moveRight(board.matriz); break;
-			case 119:	// 'w' key
-			case 107:	// 'k' key
-			case 65:	// up arrow
-				success = moveUp(board.matriz);    break;
-			case 115:	// 's' key
-			case 106:	// 'j' key
-			case 66:	// down arrow
-				success = moveDown(board.matriz);  break;
-			default: success = false;
-		}
-		if (success) {
-			drawBoard(board.matriz);
-			usleep(150000);
-			addRandom(board.matriz);
-			drawBoard(board.matriz);
-			if (gameEnded(board.matriz)) {
-				printf("         GAME OVER          \n");
-				break;
-			}
-		}
-		if (c=='q') {
-			printf("        QUIT? (y/n)         \n");
-			c=getchar();
-			if (c=='y') {
-				break;
-			}
-			drawBoard(board.matriz);
-		}
-		if (c=='r') {
-			printf("       RESTART? (y/n)       \n");
-			c=getchar();
-			if (c=='y') {
-				initBoard(board.matriz);
-			}
-			drawBoard(board.matriz);
-		}
-	}
-
-
-
-	printf("\033[?25h\033[m");*/
+	printf("\nmaior atual: %d\tmaior salvo: %d\ttempo: %.2lf\n", maiorNumAtual[0], maiorNumSalvo[0], tempo);
 
 	return 0;
 }
