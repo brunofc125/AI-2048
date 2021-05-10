@@ -2,6 +2,8 @@
 
 Monte Carlo Algorithm:
 
+![](MonteCarlo/MonteCarlo.gif)
+
 #
 [Portuguese](README_pt.md)
 
